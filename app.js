@@ -9,7 +9,7 @@ const app = express();
 
 
 app.use(cors())
-const corsOptions={
+const corsOptions = {
     origin: 'http://localhost:3000',
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -27,28 +27,13 @@ app.use(userRoutes)
 
 
 
-app.get('*', (req, res) => {
-    const requestUrl = req.url;
-    console.log(requestUrl);
-    console.log(__dirname);
-    // if(!requestUrl.startsWith('/public/')){
-    //     res.sendFile(path.join(__dirname,'views',req.url+'.html'))
+app.get('*', (req, res, next) => { let requestUrl = req.url; console.log(requestUrl); console.log(__dirname); // Remove query parameters if any
+ requestUrl = requestUrl.split('?')[0]; 
+ if (requestUrl === '/') { res.sendFile(path.join(__dirname, 'views', 'signup.html'));
 
-    // }
-    // else{
-    //     res.sendFile(path.join(__dirname,'public',req.url))
-    // }
-    if (requestUrl === '/') { res.sendFile(path.join(__dirname, 'views', 'signup.html')); }
-    else {
-        res.sendFile(path.join(__dirname, 'views', `${requestUrl}.html`), (err) => {
-            if (err) {
-                res.sendFile(path.join(__dirname, 'public', requestUrl), next);
-
-            }
-        });
-    }
-
-})
+  } else { const filePath = path.join(__dirname, 'views', `${requestUrl}.html`); 
+  res.sendFile(filePath, (err) => { if (err) { const publicFilePath = path.join(__dirname, 'public', requestUrl);
+     res.sendFile(publicFilePath, (err) => { if (err) { next(err); } }); } }); } });
 app.use((err, req, res, next) => {
     if (err) {
         console.error(err);
