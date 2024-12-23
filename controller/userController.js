@@ -1,5 +1,7 @@
 const User=require('../model/user');
 const bcrypt=require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { generateToken } = require('../util/jwt');
 
 exports.signup= async (req,res)=>{
     const {name,email,phoneno,password}=req.body;
@@ -15,7 +17,10 @@ exports.signup= async (req,res)=>{
             phoneno,
             password:hashedPassword
         })
-        res.status(201).json({message:"user created successfully"})
+        const newUser = await User.create({ name, password: hashedPassword, email });
+        const token = generateToken(newUser.id);
+      
+        res.status(201).json({message:"user created successfully",token})
     }
     catch(Error){
         console.log(Error);
@@ -36,9 +41,11 @@ exports.login = async (req, res) => {
         if (!isValidPassword) {
             return res.status(401).json({ message: "Incorrect password" });
         }
+        const token = generateToken(user.id);
+        console.log(token)
 
-        console.log("User logged in:", user.email);
-        res.status(200).json({ message: "Login successful!" });
+        
+        res.status(200).json({ message: "Login successful!",token });
     } catch (error) {
         console.error("Login Error:", error);
         res.status(500).json({ message: "Something went wrong. Please try again later." });
