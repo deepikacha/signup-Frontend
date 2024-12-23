@@ -19,6 +19,8 @@ document.getElementById('Login').addEventListener('submit', async function (even
         const responseBody = await response.json();
         if (response.ok) {
             alert(responseBody.message); // "Login successful!"
+            localStorage.setItem('token', responseBody.token); // Store token in localStorage 
+            window.location.href = '/chat.html';
         } else {
             alert(responseBody.message); // Display error message from backend
         }
@@ -26,4 +28,4 @@ document.getElementById('Login').addEventListener('submit', async function (even
         console.error("Error:", error);
         alert("An error occurred. Please try again later.");
     }
-});
+})

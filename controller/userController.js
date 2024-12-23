@@ -42,7 +42,7 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Incorrect password" });
         }
         const token = generateToken(user.id);
-        console.log(token)
+      
 
         
         res.status(200).json({ message: "Login successful!",token });
