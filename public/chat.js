@@ -1,27 +1,42 @@
-// Initialize the socket
 const socket = io('http://localhost:3000');
 
-// Emit join event with username
 const username = prompt("Enter your username:");
 socket.emit('join', username);
 
-// Listen for incoming messages
 socket.on('message', (message) => {
   displayMessage(message);
 });
 
-// Send message
-function sendMessage() {
+async function sendMessage() {
   const input = document.getElementById('messageInput');
   const message = input.value;
 
   if (message) {
-    socket.emit('message', { username: username, text: message });
+    socket.emit('message', { username, text: message });
     input.value = '';
+
+    try {
+      const response = await fetch('http://localhost:3000/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': localStorage.getItem('token')
+        },
+        body: JSON.stringify({ userId: localStorage.getItem('userId'), message }),
+      });
+
+      const responseBody = await response.json();
+      if (response.ok) {
+        console.log('Message stored successfully:', responseBody);
+      } else {
+        console.error('Error storing message:', responseBody.message);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
   }
 }
 
-// Display message
 function displayMessage(message) {
   const chatMessages = document.getElementById('chatMessages');
   const messageElement = document.createElement('div');

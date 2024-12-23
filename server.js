@@ -10,7 +10,6 @@ const io = socketIo(server);
 
 const users = [];
 
-// Socket.IO logic
 io.on('connection', (socket) => {
   console.log('New user connected');
 
@@ -21,10 +20,24 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('message', { username: 'System', text: `${username} has joined the chat` });
   });
 
-  socket.on('message', (message) => {
+  socket.on('message', async (message) => {
     const user = users.find(u => u.id === socket.id);
     if (user) {
       io.emit('message', { username: user.username, text: message.text });
+      
+      // Store the message in the database
+      try {
+        await fetch('http://localhost:3000/message', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': localStorage.getItem('token')
+          },
+          body: JSON.stringify({ userId: user.id, message: message.text }),
+        });
+      } catch (error) {
+        console.error('Error storing message:', error);
+      }
     }
   });
 
@@ -43,6 +56,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'login.html'));
 });
+
+app.get('/signup', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'signup.html'));
+  });
 
 app.get('/chat.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'chat.html'));

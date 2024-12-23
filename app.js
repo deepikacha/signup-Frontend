@@ -4,6 +4,7 @@ const bodyparser = require('body-parser');
 const cors = require('cors');
 const sequelize = require('./util/database');
 const userRoutes = require('./routes/userRoutes');
+const chatRoutes=require('./routes/chat')
 
 const app = express();
 
@@ -20,12 +21,13 @@ app.use(express.json());
 
 // User Routes
 app.use( userRoutes);
+app.use(chatRoutes);
 
 // Serving static files
 app.use(express.static('public'));
 
 // Database synchronization
-sequelize.sync()
+sequelize.sync({ force: true })
   .then(() => {
     console.log("Database synced");
   })
