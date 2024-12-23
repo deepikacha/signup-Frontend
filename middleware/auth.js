@@ -1,4 +1,4 @@
-const User=require('../model/user')
+const User=require('../models/user')
 const{verifyToken}=require('../util/jwt')
 exports.Authorize = async (req, res,next) => {
    console.log("start")

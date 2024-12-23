@@ -4,6 +4,7 @@ document.getElementById('signup').addEventListener('submit', async function(even
   const email=document.getElementById('email').value;
   const phoneno=document.getElementById('phoneno').value;
   const password=document.getElementById('password').value;
+  const username = document.getElementById('username').value;
 
   if(!name|| !email|| !phoneno || !password){
     alert("please fill out all fields");
@@ -16,7 +17,7 @@ document.getElementById('signup').addEventListener('submit', async function(even
      headers:{
       'Content-Type':'application/json'
      },
-     body:JSON.stringify({name,email,phoneno,password}),
+     body:JSON.stringify({name,email,phoneno,password,username}),
       credentials: 'include',
     })
     if(response.ok){

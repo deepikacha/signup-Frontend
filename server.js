@@ -4,6 +4,8 @@ const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 const app = require('./app'); // Import the app from app.js
+const Message = require('./models/messages');
+const User = require('./models/user'); // Ensure User model is imported
 
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -13,28 +15,26 @@ const users = [];
 io.on('connection', (socket) => {
   console.log('New user connected');
 
-  socket.on('join', (username) => {
-    const user = { id: socket.id, username };
+  socket.on('join', (name) => {
+    const user = { id: socket.id, name };
     users.push(user);
     io.emit('userList', users);
-    socket.broadcast.emit('message', { username: 'System', text: `${username} has joined the chat` });
+    socket.broadcast.emit('message', { name: 'System', text: `${name} has joined the chat` });
   });
 
   socket.on('message', async (message) => {
     const user = users.find(u => u.id === socket.id);
     if (user) {
-      io.emit('message', { username: user.username, text: message.text });
-      
-      // Store the message in the database
+      io.emit('message', { name: user.name, text: message.text });
+
+      // Store the message in the database with correct userId
       try {
-        await fetch('http://localhost:3000/message', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': localStorage.getItem('token')
-          },
-          body: JSON.stringify({ userId: user.id, message: message.text }),
-        });
+        const userInDb = await User.findOne({ where: { name: user.name } });
+        if (userInDb) {
+          await Message.create({ userId: userInDb.id, username: user.name, message: message.text });
+        } else {
+          console.error('User not found in the database');
+        }
       } catch (error) {
         console.error('Error storing message:', error);
       }
@@ -45,7 +45,7 @@ io.on('connection', (socket) => {
     const index = users.findIndex(u => u.id === socket.id);
     if (index !== -1) {
       const user = users.splice(index, 1)[0];
-      io.emit('message', { username: 'System', text: `${user.username} has left the chat` });
+      io.emit('message', { name: 'System', text: `${user.name} has left the chat` });
       io.emit('userList', users);
     }
   });
@@ -58,8 +58,8 @@ app.get('/', (req, res) => {
 });
 
 app.get('/signup', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'signup.html'));
-  });
+  res.sendFile(path.join(__dirname, 'views', 'signup.html'));
+});
 
 app.get('/chat.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'chat.html'));

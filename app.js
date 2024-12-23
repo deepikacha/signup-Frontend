@@ -27,7 +27,7 @@ app.use(chatRoutes);
 app.use(express.static('public'));
 
 // Database synchronization
-sequelize.sync({ force: true })
+sequelize.sync()
   .then(() => {
     console.log("Database synced");
   })
