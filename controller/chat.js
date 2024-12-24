@@ -1,24 +1,33 @@
 const Message = require('../models/messages');
 const User = require('../models/user');
-exports.getMessages=async (req,res)=>{
-    try{
-        const messages=await Message.findAll({
-            order:[['timestamp','ASC']],
-        })
-        res.status(200).json(messages);
 
-    }
-    catch(error){
-        console.log(error);
-        res.status(500).json({message:"Internal server error"})
-    }
-}
+const { Op } = require('sequelize');
+
+exports.getMessages = async (req, res) => {
+  const since = req.query.since || 0;
+  try {
+    const messages = await Message.findAll({
+      where: {
+        timestamp: {
+          [Op.gt]: since
+        }
+      },
+      order: [['timestamp', 'ASC']],
+      limit: 10 // Limit the result to latest 10 messages
+    });
+    res.status(200).json(messages);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 
 
 
 
 exports.message = async (req, res) => {
-  const { message, username } = req.body;
+  const { message, username } = req.body; 
   const userId = req.user.id;
 
   if (!message || !username) {

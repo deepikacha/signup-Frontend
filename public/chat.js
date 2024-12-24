@@ -17,14 +17,21 @@ socket.on('message', (message) => {
 
 // Fetch old messages when the page loads
 window.addEventListener('load', async () => {
-  fetchMessages();
+  loadMessagesFromLocalStorage();
+  fetchNewMessages();
   startPolling();
 });
 
-// Fetch messages function
-async function fetchMessages() {
+function loadMessagesFromLocalStorage() {
+  const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
+  messages.forEach(message => displayMessage(message));
+}
+
+async function fetchNewMessages() {
+  const lastMessageTimestamp = getLastMessageTimestamp();
+  
   try {
-    const response = await fetch("http://localhost:3000/messages", {
+    const response = await fetch(`http://localhost:3000/messages?since=${lastMessageTimestamp}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -35,7 +42,8 @@ async function fetchMessages() {
     if (response.ok) {
       const messages = await response.json();
       messages.forEach(message => {
-        displayMessage({ username: message.username, text: message.message });
+        displayMessage(message);
+        storeMessageInLocalStorage(message);
       });
     } else {
       console.error('Error fetching messages:', response.statusText);
@@ -45,12 +53,18 @@ async function fetchMessages() {
   }
 }
 
-// Start polling function to call fetchMessages every 1 second
-function startPolling() {
-  setInterval(fetchMessages, 1000);
+function getLastMessageTimestamp() {
+  const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
+  if (messages.length > 0) {
+    return messages[messages.length - 1].timestamp;
+  }
+  return 0; // Fetch all messages if no timestamp found
 }
 
-// Send message function
+function startPolling() {
+  setInterval(fetchNewMessages, 1000);
+}
+
 async function sendMessage() {
   const input = document.getElementById('messageInput');
   const message = input.value;
@@ -82,7 +96,6 @@ async function sendMessage() {
   }
 }
 
-// Display message function
 function displayMessage(message) {
   const chatMessages = document.getElementById('chatMessages');
   const messageElement = document.createElement('div');
@@ -90,4 +103,19 @@ function displayMessage(message) {
   messageElement.innerHTML = `<span>${message.username}:</span> ${message.text}`;
   chatMessages.appendChild(messageElement);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  // Store messages in local storage
+  storeMessageInLocalStorage(message);
+}
+
+function storeMessageInLocalStorage(message) {
+  let messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
+  messages.push(message);
+
+  // Limit to the most recent 10 messages
+  if (messages.length > 10) {
+    messages.shift();
+  }
+
+  localStorage.setItem('chatMessages', JSON.stringify(messages));
 }
