@@ -17,6 +17,12 @@ socket.on('message', (message) => {
 
 // Fetch old messages when the page loads
 window.addEventListener('load', async () => {
+  fetchMessages();
+  startPolling();
+});
+
+// Fetch messages function
+async function fetchMessages() {
   try {
     const response = await fetch("http://localhost:3000/messages", {
       method: 'GET',
@@ -37,7 +43,12 @@ window.addEventListener('load', async () => {
   } catch (error) {
     console.log("Error fetching details", error);
   }
-});
+}
+
+// Start polling function to call fetchMessages every 1 second
+function startPolling() {
+  setInterval(fetchMessages, 1000);
+}
 
 // Send message function
 async function sendMessage() {
